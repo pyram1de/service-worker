@@ -3,20 +3,27 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "serve": "webpack-dev-server",
     "start": "webpack --mode development --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode development"
   },
-  "author": "",
+  "author": "David Hulmes",
   "license": "ISC",
   "dependencies": {
     "angular": "^1.7.9",
+    "angular-route": "^1.7.9",
     "html-webpack-plugin": "^4.2.0",
     "lodash": "^4.17.15",
+    "ts-loader": "^7.0.0",
     "typescript": "^3.1.5",
-    "webpack": "^4.42.1"
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
   },
   "devDependencies": {
-    "webpack-cli": "^3.3.11"
+    "@types/angular": "^1.7.0",
+    "@types/angular-route": "^1.7.0",
+    "webpack-dev-server": "^3.10.3",
+    "webpack-visualizer-plugin": "^0.1.11"
   }
 }
