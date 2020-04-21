@@ -1,31 +1,45 @@
 import { module } from 'angular';
+import {HttpService} from "../services/http.service";
+import {ModuleService} from "../services/module.service";
+import {homeComponent} from "./home/home.component";
+import {moduleComponent} from "./module/module.component";
+import {RecordService} from "../services/record.service";
+import {ErrorService} from "../errors/error.service";
+import {errorComponent} from "../errors/error.component";
 
 class Home  {
     static requires = [require('angular-route')];
     private static module: any;
     static factory() {
             if(Home.module == null) {
-                console.log('goodbye')
-                Home.module = module('homeApp', Home.requires,
+                Home.module =
+                    module('homeApp', Home.requires,
                     [
                         '$routeProvider', '$locationProvider', ($routeProvider: any, $locationProvider: any) => {
-                        console.log('home...')
                         $routeProvider
                             .when('/', {
                                 redirectTo: '/home'
                             })
                             .when('/home', {
-                                template: '<p>home works!</p>',
-                            }).otherwise(
+                                template: '<app-home></app-home><app-error></app-error>',
+                            })
+                            .when('/home/:module', {
+                                template: '<app-module></app-module><app-error></app-error>'
+                            })
+                            .otherwise(
                             {
                                 redirectTo: '/home'
                                 }
                             );
-
                         $locationProvider.html5Mode(true);
-
-                    }
-                    ])
+                    }])
+                        .service("httpService", HttpService)
+                        .service("moduleService", ModuleService)
+                        .service("recordService", RecordService)
+                        .service('errorService', ErrorService)
+                        .component('appError', errorComponent)
+                        .component("appHome", homeComponent)
+                        .component("appModule", moduleComponent)
             }
             return 'homeApp';
     }

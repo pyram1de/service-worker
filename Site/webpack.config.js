@@ -1,42 +1,74 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const Visualizer = require('webpack-visualizer-plugin');
 const path = require('path');
+const webpack = require('webpack');
+const merge = require('webpack-merge');
 
-module.exports = {
-    context: process.cwd(),
-    entry: {
-        scripts: './src/main.ts'
-    },
-    output: {
-        path: path.resolve(__dirname, './dist'),
-        filename: 'index.js'
-    },
-    resolve: {
-        extensions: [".webpack.js", ".web.js", ".ts", ".js", ".svg", ".html", ".css"]
-    },
-    module: {
-        rules: [
-            {
-                test: /\.tsx?$/,
-                exclude: /node_modules/,
-                use: [
-                    {
-                        loader: 'ts-loader', options: {
-                            transpileOnly: true
+const commonConfig = merge([
+    {
+        context: process.cwd(),
+        entry: {
+            scripts: './src/main.ts'
+        },
+        output: {
+            path: path.resolve(__dirname, './dist'),
+            filename: 'index.js'
+        },
+        resolve: {
+            extensions: [".webpack.js", ".web.js", ".ts", ".js", ".svg", ".html", ".css"]
+        },
+        module: {
+            rules: [
+                {
+                    test: /\.tsx?$/,
+                    use: [
+                        {
+                            loader: 'ts-loader', options: {
+                                transpileOnly: true
+                            }
                         }
-                    }
-                ]
-            }
+                    ]
+                }
+            ]
+        },
+        plugins: [
+            new HtmlWebpackPlugin({
+                title: 'webpack test',
+                template: './src/index.html'
+            })
         ]
-    },
+    }
+])
+
+const productionConfig = merge([{
     plugins: [
-        new HtmlWebpackPlugin({
-            title: 'webpack test',
-            template: './src/index.html'
-        }),
+        new webpack.NormalModuleReplacementPlugin(
+            /src\/environments\/environment\.ts'/,
+            './src/environments/environment.production.ts')
+    ]
+}]);
+
+const developmentConfig = merge([{
+    plugins: [
         new Visualizer()
     ],
+    devtool: 'source-maps',
     devServer: {
         historyApiFallback: true
     }
+}]);
+
+module.exports = (env, argv) => {
+    if(argv.mode === 'production') {
+        return merge([
+            productionConfig,
+            commonConfig
+        ]);
+    }
+    return merge([
+        developmentConfig,
+        commonConfig
+    ]);
 }
+
+

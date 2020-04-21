@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "serve": "webpack-dev-server",
-    "start": "webpack --mode development --watch",
+    "serve": "webpack-dev-server --env development",
+    "start": "webpack --mode development --watch --env development",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --mode development"
+    "build": "webpack --mode=development",
+    "deploy": "webpack --mode=production"
   },
   "author": "David Hulmes",
   "license": "ISC",
@@ -15,6 +16,7 @@
     "angular-route": "^1.7.9",
     "html-webpack-plugin": "^4.2.0",
     "lodash": "^4.17.15",
+    "rxjs": "^6.5.5",
     "ts-loader": "^7.0.0",
     "typescript": "^3.1.5",
     "webpack": "^4.42.1",
@@ -24,6 +26,7 @@
     "@types/angular": "^1.7.0",
     "@types/angular-route": "^1.7.0",
     "webpack-dev-server": "^3.10.3",
+    "webpack-merge": "^4.2.2",
     "webpack-visualizer-plugin": "^0.1.11"
   }
 }
