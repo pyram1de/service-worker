@@ -19,9 +19,9 @@
     },
     "Api": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "modules",
-      "applicationUrl": "https://localhost:5001;http://localhost:5000",
+      "applicationUrl": "https://+:443;http://+:80",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

@@ -5,9 +5,11 @@ import {ErrorService} from "../errors/error.service";
 import {environment} from "../environments/environment";
 
 export class HttpService {
-    private host = environment;
+    private host = environment.host;
+
     static $inject = ['$http', 'errorService'];
     constructor(private http: IHttpService, private errorService: ErrorService) {
+        console.log('host', this.host);
     }
 
     get(url: string) : Observable<string[]> {

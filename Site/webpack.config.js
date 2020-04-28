@@ -36,15 +36,18 @@ const commonConfig = merge([
                 title: 'webpack test',
                 template: './src/index.html'
             })
-        ]
+        ],
+        devServer: {
+            historyApiFallback: true
+        }
     }
 ])
 
 const productionConfig = merge([{
     plugins: [
         new webpack.NormalModuleReplacementPlugin(
-            /src\/environments\/environment\.ts'/,
-            './src/environments/environment.production.ts')
+            /environment\.ts/,
+            'environment.production.ts')
     ]
 }]);
 
@@ -52,10 +55,7 @@ const developmentConfig = merge([{
     plugins: [
         new Visualizer()
     ],
-    devtool: 'source-maps',
-    devServer: {
-        historyApiFallback: true
-    }
+    devtool: 'source-maps'
 }]);
 
 module.exports = (env, argv) => {

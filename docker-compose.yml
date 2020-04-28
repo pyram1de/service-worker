@@ -1,18 +1,27 @@
 version: "3.4"
 services:
     api:
-        container_name: webApi
-        build: ./Api
+        build: ./api
+        container_name: webapi
+        ports:
+            - 80
+            - 443
         environment:
+            - ASPNETCORE_ENVIRONMENT=Development
             - ASPNETCORE_URLS=https://+:443;http://+:80
-            - ASPNETCORE_HTTPS_PORT=443
-            - ASPNETCORE_Kestrel__Certificates__Default__Password=g-BPGBsgKqsV.v!@jT2f
-            - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/api.pfx
+            - ASPNETCORE_Kestrel__Certificates__Default__Password=theking
+            - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/webapi.crt
         volumes:
-            - C:\certs\service-worker\:C:\https\
+            - ./api/ssl:C:\https:ro
         networks:
             bridge:
                 ipv4_address: 172.18.0.10
+    spa:
+        container_name: site
+        build: ./site
+        networks:
+            bridge:
+                ipv4_address: 172.18.0.11
 networks:
     bridge:
         driver: nat
