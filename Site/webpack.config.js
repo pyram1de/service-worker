@@ -8,14 +8,20 @@ const commonConfig = merge([
     {
         context: process.cwd(),
         entry: {
-            scripts: './src/main.ts'
+            scripts: './src/main.ts',
+            sw: './src/sw.ts'
         },
         output: {
-            path: path.resolve(__dirname, './dist'),
-            filename: 'index.js'
+            path: path.resolve(__dirname, 'dist'),
+            filename: '[name].js'
         },
         resolve: {
             extensions: [".webpack.js", ".web.js", ".ts", ".js", ".svg", ".html", ".css"]
+        },
+        optimization: {
+            splitChunks: {
+                chunks: 'all',
+            }
         },
         module: {
             rules: [
@@ -34,11 +40,14 @@ const commonConfig = merge([
         plugins: [
             new HtmlWebpackPlugin({
                 title: 'webpack test',
-                template: './src/index.html'
+                template: './src/index.html',
+                excludeChunks: ['sw']
             })
         ],
         devServer: {
-            historyApiFallback: true
+            historyApiFallback: true,
+            hot: false, // use to get service worker... working
+            hotOnly: false,
         }
     }
 ])

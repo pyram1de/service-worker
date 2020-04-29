@@ -1,3 +1,3 @@
 export const environment = {
-    host: 'https://localhost:5001'
+    host: 'https://webapi.com'
 };
