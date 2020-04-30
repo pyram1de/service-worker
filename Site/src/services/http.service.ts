@@ -29,16 +29,15 @@ export class HttpService {
     }
 
     put(url: string, data: any) : Observable<any> {
-        console.log('putting', url, data);
         return from(this.http.put(`${this.host}/${url}`, data, {
             headers: {
                 'Content-Type': 'application/json'
             }
         }))
-                .pipe(
-                    map(result => result.data),
-                    this.handleError,
-                    retry(2));
+        .pipe(
+            map(result => result.data),
+            this.handleError,
+            retry(2));
     }
 
     private handleError = catchError((err, caught) => {

@@ -1,25 +1,24 @@
-import {EnvironmentPlugin} from "webpack";
 import {environment} from "./environments/environment";
 import {SaveService} from "./ServiceWorker/Save/save.service";
 
-const version = 'v5';
+const version = 'v225';
 
 self.addEventListener('install', (event: any) => {
-   console.log('INSTALLED ' + version, event);
+    console.log('INSTALLING');
    return event.waitUntil(
        caches.open(version)
            .then((cache) => {
                return cache.addAll([
-                    'https://minisite.com:8080/vendors~scripts.js',
+                   'https://minisite.com:8080/vendors~scripts.js',
                    'https://minisite.com:8080/scripts.js',
                    'https://minisite.com:8080'
-               ])
+               ]);
            })
-   )
+   );
 });
 
 self.addEventListener('activate', (event:any) => {
-    console.log('activated ' + version, event);
+    console.log('activating new one');
     event.waitUntil(
         caches.keys()
             .then((keys) => {
@@ -29,13 +28,20 @@ self.addEventListener('activate', (event:any) => {
 });
 
 self.addEventListener('fetch', (event: any) => {
-    console.log('wanting to fetch', event.request.url);
+    if(event.request.bodyUsed) {
+        console.log('body', event.request.body)
+        let reader = event.request.body.getReader();
+        reader.read().then((result: any) => {
+            console.log('read stream', result);
+        })
+    }
+
     return event.respondWith(
         caches.match(event.request)
             .then((res:any) => {
                 if(res)
                     return res;
-                console.log('event', event);
+
                 if(!navigator.onLine)
                 {
                     if(event.request.url === environment.host + '/modules') {
@@ -78,17 +84,4 @@ self.addEventListener('fetch', (event: any) => {
                 return fetch(event.request);
             })
     )
-
-/*
-    if(!navigator.onLine) {
-        // offline
-        console.log('offline!');
-        if(event.request.url == environment.host + '/modules') {
-            console.log('is modules')
-        }
-        return null;
-    }
-
-    console.log('fetch', event.request.url);
-    return null;*/
 })

@@ -1,4 +1,4 @@
-import { module } from 'angular';
+import {IModule, module} from 'angular';
 import {HttpService} from "../services/http.service";
 import {ModuleService} from "../services/module.service";
 import {homeComponent} from "./home/home.component";
@@ -6,10 +6,11 @@ import {moduleComponent} from "./module/module.component";
 import {RecordService} from "../services/record.service";
 import {ErrorService} from "../errors/error.service";
 import {errorComponent} from "../errors/error.component";
+import {ServiceWorkerService} from "../ServiceWorker/service-worker.service";
 
 class Home  {
     static requires = [require('angular-route')];
-    private static module: any;
+    private static module: IModule;
     static factory() {
             if(Home.module == null) {
                 Home.module =
@@ -37,15 +38,16 @@ class Home  {
                         .service("moduleService", ModuleService)
                         .service("recordService", RecordService)
                         .service('errorService', ErrorService)
+                        .factory('serviceWorkerService', ServiceWorkerService.getInstance)
                         .component('appError', errorComponent)
                         .component("appHome", homeComponent)
-                        .component("appModule", moduleComponent)
+                        .component("appModule", moduleComponent);
+
             }
             return 'homeApp';
     }
 }
 
 export default function homeApp() {
-    let result = Home.factory();
-    return result;
+    return Home.factory();
 }
