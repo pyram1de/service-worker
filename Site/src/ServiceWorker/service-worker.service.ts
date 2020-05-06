@@ -1,34 +1,29 @@
-import {fromEventPattern, Observable, ReplaySubject} from "rxjs";
-import {default as registerWorker} from "./registration";
-import {filter, switchMap} from "rxjs/operators";
-import {fromPromise} from "rxjs/internal-compatibility";
-
+import {BehaviorSubject, fromEventPattern, Observable, ReplaySubject} from "rxjs";
+import registerWorker from "./registration";
+import {map, switchMap} from "rxjs/operators";
 
 export class ServiceWorkerService {
     private static instance: ServiceWorkerService;
-    private static worker$: ReplaySubject<ServiceWorkerRegistration> =
+    private static registration$: ReplaySubject<ServiceWorkerRegistration> =
         new ReplaySubject<ServiceWorkerRegistration>(1);
 
-    private static worker: ServiceWorkerRegistration;
-
-    public get updateAvailable$() :Observable<any> {
-        return ServiceWorkerService.worker$.pipe(
-                filter(worker => worker!=null),
-                switchMap(() =>
-                    fromEventPattern(ServiceWorkerService.addOnUpdateHandler, ServiceWorkerService.removeOnUpdateHandler)
-                )
-            );
+    private static registration: ServiceWorkerRegistration;
+    private updateAvailable: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
+    public get updateAvailable$() :Observable<boolean> {
+        return this.updateAvailable.asObservable();
     }
 
-    public update() : Observable<void> {
-        return fromPromise(ServiceWorkerService.worker.update());
+    public update() : void {
+        if(ServiceWorkerService.registration.waiting) {
+            ServiceWorkerService.registration.waiting.postMessage('skipWaiting')
+        }
     }
 
     public static getInstance(): ServiceWorkerService {
-        registerWorker().then((serviceWorker: ServiceWorkerRegistration) => {
-            if(serviceWorker) {
-                ServiceWorkerService.worker = serviceWorker;
-                ServiceWorkerService.worker$.next(ServiceWorkerService.worker);
+        registerWorker().then((registration: ServiceWorkerRegistration) => {
+            if(registration) {
+                ServiceWorkerService.registration = registration;
+                ServiceWorkerService.registration$.next(ServiceWorkerService.registration);
             }
         });
         if(!ServiceWorkerService.instance) {
@@ -36,16 +31,35 @@ export class ServiceWorkerService {
         }
         return ServiceWorkerService.instance;
     }
-    private static addOnUpdateHandler(handler: EventListenerOrEventListenerObject) {
-        let worker = ServiceWorkerService.worker;
-        worker.addEventListener('updatefound', handler)
+
+    private onUpdateHandler(registration: ServiceWorkerRegistration): Observable<any> {
+        const addOnUpdateHandler = (handler: EventListenerOrEventListenerObject) => {
+            registration.addEventListener('updatefound', handler);
+        }
+        const removeOnUpdateHandler = (handler: EventListenerOrEventListenerObject) => {
+            registration.removeEventListener('updatefound', handler);
+        }
+        return fromEventPattern(addOnUpdateHandler, removeOnUpdateHandler);
     }
+    private nextWorker: any;
+    private constructor() {
+        this.nextWorker = null;
+        ServiceWorkerService.registration$
+            .pipe(switchMap(registration => {
+                registration.addEventListener('controllerchange', (x:any) => {
+                    console.log('HELP', x);
+                });
+                return this.onUpdateHandler(registration).pipe(map(res => {
+                    console.log('update found????', res);
+                    let newWorker = res.installing
+                    console.log('setting next worker to', registration.installing);
 
-    private static removeOnUpdateHandler(handler: EventListenerOrEventListenerObject) {
-        let worker = ServiceWorkerService.worker;
-        worker.removeEventListener('updatefound', handler);
+                    this.nextWorker = registration.installing;
+                    this.updateAvailable.next(true);
+                }))
+            }))
+            .subscribe(registration => {
+                console.log('I have subscribed....');
+            });
     }
-
-    private constructor() {}
-
 }

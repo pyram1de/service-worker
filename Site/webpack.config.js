@@ -1,8 +1,9 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const Visualizer = require('webpack-visualizer-plugin');
+const ServiceWorkerAssetsPlugin = require('./plugins/ServiceWorkerAssetsPlugin');
 const path = require('path');
 const webpack = require('webpack');
 const merge = require('webpack-merge');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 const commonConfig = merge([
     {
@@ -13,14 +14,26 @@ const commonConfig = merge([
         },
         output: {
             path: path.resolve(__dirname, 'dist'),
-            filename: '[name].js'
+            filename: (chunkData) => {
+                if(chunkData.chunk.id === 'sw') {
+                    return '[name].js';
+                }
+                return '[name].[hash].bundle.js';
+            }
         },
         resolve: {
             extensions: [".webpack.js", ".web.js", ".ts", ".js", ".svg", ".html", ".css"]
         },
         optimization: {
             splitChunks: {
-                chunks: 'all',
+                cacheGroups: {
+                    commons: {
+                        test: /[\\/]node_modules[\\/]/,
+                        name: 'vendors',
+                        chunks: 'initial',
+                        minChunks: 2
+                    }
+                }
             }
         },
         module: {
@@ -32,16 +45,28 @@ const commonConfig = merge([
                             loader: 'ts-loader', options: {
                                 transpileOnly: true
                             }
+                        },
+                        {
+                            loader: 'string-replace-loader',
+                            options: {
+                                search: '$$version$$',
+                                replace: () => {
+                                    return new Date().toISOString()
+                                }
+                            }
                         }
                     ]
                 }
             ]
         },
         plugins: [
+            new CleanWebpackPlugin(),
             new HtmlWebpackPlugin({
                 title: 'webpack test',
-                template: './src/index.html',
-                excludeChunks: ['sw']
+                template: './src/index.html'
+            }),
+            new ServiceWorkerAssetsPlugin({
+
             })
         ],
         devServer: {
@@ -62,18 +87,20 @@ const productionConfig = merge([{
 
 const developmentConfig = merge([{
     plugins: [
-        new Visualizer()
     ],
     devtool: 'source-maps'
 }]);
 
 module.exports = (env, argv) => {
     if(argv.mode === 'production') {
+
+
         return merge([
             productionConfig,
             commonConfig
         ]);
     }
+
     return merge([
         developmentConfig,
         commonConfig

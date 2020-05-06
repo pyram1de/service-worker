@@ -1,4 +1,4 @@
-import {IComponentOptions, ILocationService, IOnInit, IScope} from "angular";
+import {IComponentOptions, ILocationService, IOnInit, IScope, IWindowService} from "angular";
 import {ModuleService} from "../../services/module.service";
 import {ServiceWorkerService} from "../../ServiceWorker/service-worker.service";
 
@@ -8,12 +8,14 @@ class HomeController implements IOnInit{
 
     static $inject: string[] = [
         '$scope',
+        '$window',
         'moduleService',
         '$location',
         'serviceWorkerService'];
 
     constructor(
         private $scope: IScope,
+        private $window: IWindowService,
         private moduleService: ModuleService,
         private $location: ILocationService,
         private serviceWorkerService: ServiceWorkerService
@@ -23,10 +25,12 @@ class HomeController implements IOnInit{
     $onInit(): void {
         this.moduleService.modules.subscribe(modules => this.modules = modules);
         this.serviceWorkerService.updateAvailable$.subscribe(update => {
-            console.log('update available', update);
-            this.$scope.$apply(() => {
-                this.updateAvailable = true;
-            });
+            if(update) {
+                console.log('update available', update);
+                this.$scope.$apply(() => {
+                    this.updateAvailable = true;
+                });
+            }
         })
     }
 
@@ -35,9 +39,7 @@ class HomeController implements IOnInit{
     }
 
     public update() {
-        this.serviceWorkerService.update().subscribe(() => {
-            console.log('updated....');
-        });
+        this.serviceWorkerService.update();
     }
 }
 
@@ -45,6 +47,7 @@ class HomeController implements IOnInit{
 export const homeComponent: IComponentOptions = {
     controller: HomeController,
     template: `
+        <div>Welcome Home 1</div>
         <div ng-repeat="module in $ctrl.modules">
             {{module}}
             <a ng-click="$ctrl.navigate(module)">go</a>
