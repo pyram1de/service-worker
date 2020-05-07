@@ -7,6 +7,8 @@ import {RecordService} from "../services/record.service";
 import {ErrorService} from "../errors/error.service";
 import {errorComponent} from "../errors/error.component";
 import {ServiceWorkerService} from "../ServiceWorker/service-worker.service";
+import {environment} from "../environments/environment";
+import {removeServiceWorkers} from "../ServiceWorker/registration";
 
 class Home  {
     static requires = [require('angular-route')];

@@ -13,5 +13,19 @@ export default function registerWorker() : Promise<any> {
             .catch(err => console.log('we have an error', err));
 
     }
-    return Promise.resolve();
+    return Promise.reject("not supported in this browser");
+}
+
+
+export function removeServiceWorkers() : Promise<any> {
+    if('serviceWorker' in navigator) {
+        return navigator.serviceWorker.getRegistrations().then((registrations) => {
+            let promises = [];
+            for(let reg of registrations) {
+               promises.push(reg.unregister());
+            }
+            return Promise.all(promises);
+        });
+    }
+    return Promise.reject("not supported in this browser");
 }

@@ -14,12 +14,16 @@ const cached_files =
         './'
     ];
 
+
 self.addEventListener('install', (event: any) => {
     event.waitUntil(
         caches
             .open(version)
             .then(cache => {
-                return cache.addAll(swGlobalCacheAssets.concat(cached_files))
+                console.log('version on the cache', version, cache);
+                let filesToCache = swGlobalCacheAssets.concat(cached_files);
+                console.log('files to cache', filesToCache);
+                return cache.addAll(filesToCache);
             })
             .catch(error => {
                 console.error(error)
@@ -55,12 +59,12 @@ self.addEventListener('activate', (event:any) => {
             )
         })
     )
+    return self.clients.claim()
 });
 
 self.addEventListener('message', messageEvent => {
     if(messageEvent.data === 'skipWaiting') {
-        self.skipWaiting()
-        self.clients.claim()
+        return self.skipWaiting()
     }
 })
 
@@ -109,9 +113,24 @@ self.addEventListener('fetch', (event: any) => {
                         }
                     }
                     console.log('not online and no cache', event.request);
+
+
                 }
 
-                return fetch(event.request);
+                console.log('REQ', req);
+                if(
+                    req.method === 'GET' &&
+                    req.mode === 'navigate' &&
+                    req.destination === 'document') {
+                    console.log('THE REQUEST', event.request);
+                    return caches.match('./').then((result) => {
+                        console.log('RESULT', result);
+                        return result;
+                    });
+                }
+                return fetch(event.request).catch(err => {
+                    console.log('ERR', err);
+                });
             })
     )
 })
