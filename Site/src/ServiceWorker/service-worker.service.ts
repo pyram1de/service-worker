@@ -1,6 +1,7 @@
 import {BehaviorSubject, fromEventPattern, Observable, ReplaySubject} from "rxjs";
-import registerWorker from "./registration";
+import registerWorker, {removeServiceWorkers} from "./registration";
 import {map, switchMap} from "rxjs/operators";
+import {environment} from "../environments/environment";
 
 export class ServiceWorkerService {
     private static instance: ServiceWorkerService;
@@ -20,12 +21,22 @@ export class ServiceWorkerService {
     }
 
     public static getInstance(): ServiceWorkerService {
-        registerWorker().then((registration: ServiceWorkerRegistration) => {
-            if(registration) {
-                ServiceWorkerService.registration = registration;
-                ServiceWorkerService.registration$.next(ServiceWorkerService.registration);
-            }
-        });
+        if(environment.features.serviceWorker) {
+            registerWorker().then((registration: ServiceWorkerRegistration) => {
+                if(registration) {
+                    ServiceWorkerService.registration = registration;
+                    ServiceWorkerService.registration$.next(ServiceWorkerService.registration);
+                }
+            });
+        } else {
+            removeServiceWorkers()
+                .then(() => {
+                    console.log('successfully removed service workers');
+                })
+                .catch((err) => {
+                    console.log('could not remove service workers');
+                })
+        }
         if(!ServiceWorkerService.instance) {
             ServiceWorkerService.instance = new ServiceWorkerService();
         }
