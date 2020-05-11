@@ -90,13 +90,14 @@ const productionConfig = merge([{
         new webpack.NormalModuleReplacementPlugin(
             /environment\.ts/,
             'environment.production.ts')
-    ]
+    ],
+    devtool: 'inline-source-map',
 }]);
 
 const developmentConfig = merge([{
     plugins: [
     ],
-    devtool: 'source-maps'
+    devtool: 'inline-source-map',
 }]);
 
 module.exports = (env, argv) => {
