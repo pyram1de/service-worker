@@ -5,6 +5,7 @@ const webpack = require('webpack');
 const merge = require('webpack-merge');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const  CopyPlugin = require('copy-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 const commonConfig = merge([
     {
@@ -40,6 +41,21 @@ const commonConfig = merge([
         module: {
             rules: [
                 {
+                    test: /\.sass$/,
+                    use: [
+                        MiniCssExtractPlugin.loader,
+                        {
+                            loader: 'css-loader'
+                        },
+                        {
+                            loader: 'sass-loader',
+                            options: {
+                                sourceMap: true,
+                            }
+                        }
+                    ]
+                },
+                {
                     test: /\.tsx?$/,
                     use: [
                         {
@@ -61,21 +77,24 @@ const commonConfig = merge([
             ]
         },
         plugins: [
-            new CleanWebpackPlugin(),
+            new CleanWebpackPlugin({
+                cleanStaleWebpackAssets: false
+            }),
             new HtmlWebpackPlugin({
                 title: 'webpack test',
                 template: './src/index.html'
             }),
-            new ServiceWorkerAssetsPlugin({
-
-            }),
+            new ServiceWorkerAssetsPlugin(),
             new CopyPlugin([{
                     from: path.join(__dirname, 'assets'),
                     to: path.join(__dirname, 'dist')
                 },{
                 from: path.join(__dirname, 'src/manifest.json'),
                 to: path.join(__dirname, 'dist')
-            }])
+            }]),
+            new MiniCssExtractPlugin({
+                filename: 'css/styles.css'
+            }),
         ],
         devServer: {
             historyApiFallback: true,
