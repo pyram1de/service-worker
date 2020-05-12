@@ -68,25 +68,24 @@ self.addEventListener('message', messageEvent => {
     }
 })
 
-self.addEventListener('fetch', (event: any) => {
+self.addEventListener('fetch', (event: FetchEvent) => {
     const req = event.request;
     return event.respondWith(
         caches.match(event.request)
             .then((res:any) => {
-                if(res)
+                if (res)
                     return res;
 
-                if(!navigator.onLine)
-                {
-                    if(event.request.url === environment.host + '/modules') {
+                if (!navigator.onLine) {
+                    if (event.request.url === environment.host + '/modules') {
                         return new Response('["AC", "AI", "PASS"]', {
                             headers: {
                                 'Content-Type': 'application/json'
                             }
                         });
                     }
-                    if(event.request.url === environment.host + '/record') {
-                        if(event.request.method === 'POST') {
+                    if (event.request.url === environment.host + '/record') {
+                        if (event.request.method === 'POST') {
                             return new Response(
                                 JSON.stringify(
                                     {
@@ -102,23 +101,22 @@ self.addEventListener('fetch', (event: any) => {
                                     }
                                 });
                         }
-                        if(event.request.method === 'PUT') {
+                        if (event.request.method === 'PUT') {
                             const body = event.request.body;
-                            return new Response(
-                                JSON.stringify(SaveService.save(JSON.parse(body))), {
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    }
-                                });
+                            if (body !== undefined) {
+
+                                return new Response(
+                                    JSON.stringify(SaveService.save(body)), {
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        }
+                                    });
+                            }
                         }
                     }
                     console.log('not online and no cache', event.request);
-
-
                 }
-
-                console.log('REQ', req);
-                if(
+                if (
                     req.method === 'GET' &&
                     req.mode === 'navigate' &&
                     req.destination === 'document') {
@@ -128,89 +126,76 @@ self.addEventListener('fetch', (event: any) => {
                         return result;
                     });
                 }
-                return fetch(event.request).catch(err => {
-                    console.log('ERR', err);
-                });
-            })
-    )
-})
 
+                // network first
 
-/*
-self.addEventListener('fetch', event => {
-    const request = event.request
-
-    // Ignore not GET request.
-    if (request.method !== 'GET') {
-        if (DEBUG) {
-            console.log(`[SW] Ignore non GET request ${request.method}`)
-        }
-        return
-    }
-
-    const requestUrl = new URL(request.url)
-
-    // Ignore difference origin.
-    if (requestUrl.origin !== location.origin) {
-        if (DEBUG) {
-            console.log(`[SW] Ignore difference origin ${requestUrl.origin}`)
-        }
-        return
-    }
-
-    const resource = global.caches.match(request).then(response => {
-        if (response) {
-            if (DEBUG) {
-                console.log(`[SW] fetch URL ${requestUrl.href} from cache`)
-            }
-
-            return response
-        }
-
-        // Load and cache known assets.
-        return fetch(request)
-            .then(responseNetwork => {
-                if (!responseNetwork || !responseNetwork.ok) {
-                    if (DEBUG) {
-                        console.log(
-                            `[SW] URL [${requestUrl.toString()}] wrong responseNetwork: ${
-                                responseNetwork.status
-                            } ${responseNetwork.type}`
-                        )
-                    }
-
-                    return responseNetwork
-                }
-
-                if (DEBUG) {
-                    console.log(`[SW] URL ${requestUrl.href} fetched`)
-                }
-
-                const responseCache = responseNetwork.clone()
-
-                global.caches
-                    .open(CACHE_NAME)
-                    .then(cache => {
-                        return cache.put(request, responseCache)
-                    })
-                    .then(() => {
-                        if (DEBUG) {
-                            console.log(`[SW] Cache asset: ${requestUrl.href}`)
+                return networkRequestFallBackToCache(event)
+                    .catch((err: any) => {
+                        console.log('ERROR!!', err);
+                        if(event.request.url === environment.host + '/modules') {
+                            return new Response('["AC", "AI", "PASS"]', {
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
                         }
                     })
 
-                return responseNetwork
+            }));});
+
+/*
+                return fetch(event.request).catch(err => {
+                    if(event.request.url === environment.host + '/modules') {
+                        return new Response('["AC", "AI", "PASS"]', {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                    }
+                });
             })
-            .catch(() => {
-                // User is landing on our page.
-                if (event.request.mode === 'navigate') {
-                    return global.caches.match('./')
+    )
+
+})
+*/
+function networkRequestFallBackToCache(event: FetchEvent) : Promise<Response | undefined> {
+    try {
+        return fetchAndUpdate(event.request);
+    } catch (err) {
+        return caches.match(event.request);
+    }
+    return Promise.reject("something else happened");
+
+    /*
+    return event.respondWith(() => {
+        try {
+            return fetchAndUpdate(event.request);
+        } catch (err) {
+            return caches.match(event.request).then((res: any) => {
+                if (res !== undefined) {
+                    return res;
                 }
+                return Promise.reject("nothing in the cache");
+            });
+        }
+        return Promise.reject("something else happened");
+    });*/
+}
 
-                return null
-            })
-    })
-
-    event.respondWith(resource)
-})*/
+function fetchAndUpdate(request: Request) : Promise<Response> {
+    return fetch(request)
+        .then(function (res: Response) {
+            if(res) {
+                return caches.open(version)
+                    .then(function (cache) {
+                        return cache.put(request, res.clone())
+                            .then(function () {
+                                return res
+                            })
+                    })
+            } else {
+                return Promise.reject("no response received?")
+            }
+        })
+}
 
