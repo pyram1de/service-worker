@@ -4,8 +4,8 @@ const path = require('path');
 const webpack = require('webpack');
 const merge = require('webpack-merge');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const  CopyPlugin = require('copy-webpack-plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const  CopyPlugin = require('copy-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const commonConfig = merge([
     {
@@ -24,7 +24,18 @@ const commonConfig = merge([
             }
         },
         resolve: {
-            extensions: [".webpack.js", ".web.js", ".ts", ".js", ".svg", ".html", ".css"]
+            alias: {
+                './fonts': path.resolve(__dirname, 'fonts')
+            },
+            extensions: [
+                ".webpack.js", ".web.js", ".ts", ".js",
+                ".svg", ".html", ".css", ".sass", ".less"]
+        },
+        resolveLoader: {
+            modules: [
+                'node_modules',
+                path.resolve(__dirname, 'loaders'),
+            ],
         },
         optimization: {
             splitChunks: {
@@ -41,11 +52,34 @@ const commonConfig = merge([
         module: {
             rules: [
                 {
+                  test: /\.(ttf)$/,
+                    loader: 'file-loader',
+                    options: {
+                      name: `fonts/[name].[ext]`
+                    }
+                },
+                {
                     test: /\.sass$/,
                     use: [
                         MiniCssExtractPlugin.loader,
                         {
-                            loader: 'css-loader'
+                            loader: 'css-loader',
+                            options: {
+                                sourceMap: true,
+                                modules: {
+                                    mode: 'local',
+                                    exportGlobals: true,
+                                    localIdentName: '[name]__[local]--[hash:base64:5]',
+                                    context: path.resolve(__dirname, 'src'),
+                                    hashPrefix: 'my-custom-hash',
+                                },
+                            }
+                        },
+                        {
+                            loader: 'resolve-url-loader',
+                            options: {
+                                sourceMap: true,
+                            }
                         },
                         {
                             loader: 'sass-loader',
@@ -59,9 +93,13 @@ const commonConfig = merge([
                     test: /\.tsx?$/,
                     use: [
                         {
-                            loader: 'ts-loader', options: {
+                            loader: 'ts-loader',
+                            options: {
                                 transpileOnly: true
                             }
+                        },
+                        {
+                          loader: 'style-urls-loader',
                         },
                         {
                             loader: 'string-replace-loader',
@@ -94,7 +132,7 @@ const commonConfig = merge([
             }]),
             new MiniCssExtractPlugin({
                 filename: 'css/styles.css'
-            }),
+            })
         ],
         devServer: {
             historyApiFallback: true,

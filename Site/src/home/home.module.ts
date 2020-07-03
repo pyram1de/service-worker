@@ -1,4 +1,4 @@
-import {IModule, module} from 'angular';
+import {IModule, IRootElementService, IScope, module} from 'angular';
 import {HttpService} from "../services/http.service";
 import {ModuleService} from "../services/module.service";
 import {homeComponent} from "./home/home.component";
@@ -22,9 +22,14 @@ class Home  {
                         $routeProvider
                             .when('/', {
                                 redirectTo: '/home'
+                                ,controller: ['$rootElement', '$scope',
+                                    (rootElement: IRootElementService, scope: any) => {
+                                        scope["runningApp"] = rootElement.attr('ng-app').valueOf();
+                                        console.log('the name of the app is', scope["runningApp"]);
+                                    }]
                             })
                             .when('/home', {
-                                template: '<app-home></app-home><app-error></app-error>',
+                                template: '<app-home></app-home><app-error></app-error>'
                             })
                             .when('/home/:module', {
                                 template: '<app-module></app-module><app-error></app-error>'
@@ -43,7 +48,11 @@ class Home  {
                         .factory('serviceWorkerService', ServiceWorkerService.getInstance)
                         .component('appError', errorComponent)
                         .component("appHome", homeComponent)
-                        .component("appModule", moduleComponent);
+                        .component("appModule", moduleComponent)
+                        .run(['$rootScope',
+                            (rootScope: any) => {
+                                rootScope.runningApp = "home";
+                            }])
 
             }
             return 'homeApp';

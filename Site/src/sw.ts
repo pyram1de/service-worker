@@ -6,6 +6,8 @@ const version = '$$version$$'
 declare var self: ServiceWorkerGlobalScope;
 
 
+
+
 declare var swGlobalCacheAssets: string[];
 
 const cached_files =

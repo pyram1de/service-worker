@@ -44,10 +44,11 @@ class HomeController implements IOnInit{
 }
 
 
-export const homeComponent: IComponentOptions = {
+export const homeComponent: any = {
     controller: HomeController,
+    styleUrl: './home.component.sass',
     template: `
-        <div>Welcome Home 1</div>
+        <div class="header">Welcome Home 1</div>
         <div ng-repeat="module in $ctrl.modules">
             {{module}}
             <a ng-click="$ctrl.navigate(module)">go</a>

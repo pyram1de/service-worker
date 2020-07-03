@@ -9,7 +9,24 @@
           href="/favicon.ico?v=7" />
     <link rel="manifest" href="/manifest.json">
 </head>
-<body id="body" ng-view>
-
+<body id="body" ng-cloak>
+    <div ng-switch="runningApp">
+        <div ng-switch-when="home">
+            <h1>{{runningApp}}</h1>
+            <div ng-view></div>
+            -- home
+        </div>
+        <div ng-switch-when="basic">
+            <h1>{{runningApp}}</h1>
+            <div ng-view></div>
+            -- basic
+        </div>
+    </div>
+    <div class="header">
+        I dont want this to be affected by the other one...
+    </div>
+    <div class="header">
+        BUT IT IS!!!
+    </div>
 </body>
 </html>
