@@ -154,7 +154,7 @@ const productionConfig = merge([{
 const developmentConfig = merge([{
     plugins: [
     ],
-    devtool: 'inline-source-map',
+    devtool: 'source-map',
 }]);
 
 module.exports = (env, argv) => {

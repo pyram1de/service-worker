@@ -1,5 +1,6 @@
-module.exports = function(source) {
-    const regex = /styleUrl:[\s]*["'](?<url>.+\.(less|sass))["']+/g;
+module.exports = function(source, sourceMap) {
+    this.cacheable();
+    const regex = /styleUrl:[\s]*["'](?<url>.+\.(less|scss))["']+/g;
     source = source.replace(regex, "styleUrl: require('$1')");
-    return source;
+    this.callback(null, source, sourceMap);
 };
