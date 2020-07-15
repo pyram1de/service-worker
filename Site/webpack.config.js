@@ -122,14 +122,20 @@ const commonConfig = merge([
                 title: 'webpack test',
                 template: './src/index.html'
             }),
+            new HtmlWebpackPlugin({
+                title: 'webpack test',
+                template: './src/index.html',
+                filename: '404.html'
+            }),
             new ServiceWorkerAssetsPlugin(),
             new CopyPlugin([{
                     from: path.join(__dirname, 'assets'),
                     to: path.join(__dirname, 'dist')
                 },{
-                from: path.join(__dirname, 'src/manifest.json'),
-                to: path.join(__dirname, 'dist')
-            }]),
+                    from: path.join(__dirname, 'src/manifest.json'),
+                    to: path.join(__dirname, 'dist')
+                },
+            ]),
             new MiniCssExtractPlugin({
                 filename: 'css/styles.css'
             })
