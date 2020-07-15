@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode=development --watch",
     "deploy": "webpack --mode=production",
-    "http-server": "http-server dist -S --key ssl\\minisite.key --gzip --cert ssl\\minisite.crt --port 8080"
+    "http-server": "http-server dist -c-1 -S --key ssl\\minisite.key --gzip --cert ssl\\minisite.crt --port 8080"
   },
   "author": "David Hulmes",
   "license": "ISC",
