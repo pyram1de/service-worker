@@ -2,8 +2,10 @@ export default function registerWorker() : Promise<any> {
     if('serviceWorker' in navigator) {
         let refreshing: any;
         navigator.serviceWorker.addEventListener('controllerchange',
-            function() {
-                if (refreshing) return;
+            () => {
+                if (refreshing) {
+                    return;
+                }
                 refreshing = true;
                 window.location.reload();
             }
@@ -18,6 +20,7 @@ export default function registerWorker() : Promise<any> {
 
 
 export function removeServiceWorkers() : Promise<any> {
+    console.log('registration removeServiceWorkers');
     if('serviceWorker' in navigator) {
         return navigator.serviceWorker.getRegistrations().then((registrations) => {
             let promises = [];

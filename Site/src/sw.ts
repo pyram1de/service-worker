@@ -4,10 +4,6 @@ import {environment} from "./environments/environment";
 const version = '$$version$$'
 
 declare var self: ServiceWorkerGlobalScope;
-
-
-
-
 declare var swGlobalCacheAssets: string[];
 
 const cached_files =
@@ -16,13 +12,11 @@ const cached_files =
         './'
     ];
 
-
 self.addEventListener('install', (event: any) => {
     event.waitUntil(
         caches
             .open(version)
             .then(cache => {
-                console.log('version on the cache', version, cache);
                 let filesToCache = swGlobalCacheAssets.concat(cached_files);
                 console.log('files to cache', filesToCache);
                 return cache.addAll(filesToCache);
@@ -32,18 +26,6 @@ self.addEventListener('install', (event: any) => {
                 throw error
             })
     )
-    /*
-   return event.waitUntil(
-       caches.open(version)
-           .then((cache) => {
-               return cache.addAll([
-                   //'https://minisite.com:8080/vendors~scripts.js',
-                   //'https://minisite.com:8080/scripts.js',
-                   //'https://minisite.com:8080',
-                   spa_index
-               ]);
-           })
-   );*/
 });
 
 self.addEventListener('activate', (event:any) => {
@@ -116,50 +98,21 @@ self.addEventListener('fetch', (event: FetchEvent) => {
                             }
                         }
                     }
-                    console.log('not online and no cache', event.request);
                 }
                 if (
                     req.method === 'GET' &&
                     req.mode === 'navigate' &&
                     req.destination === 'document') {
-                    console.log('THE REQUEST', event.request);
                     return caches.match('./').then((result) => {
-                        console.log('RESULT', result);
                         return result;
                     });
                 }
 
                 // network first
 
-                return networkRequestFallBackToCache(event)
-                    .catch((err: any) => {
-                        console.log('ERROR!!', err);
-                        if(event.request.url === environment.host + '/modules') {
-                            return new Response('["AC", "AI", "PASS"]', {
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            });
-                        }
-                    })
-
+                return networkRequestFallBackToCache(event);
             }));});
 
-/*
-                return fetch(event.request).catch(err => {
-                    if(event.request.url === environment.host + '/modules') {
-                        return new Response('["AC", "AI", "PASS"]', {
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                    }
-                });
-            })
-    )
-
-})
-*/
 function networkRequestFallBackToCache(event: FetchEvent) : Promise<Response | undefined> {
     try {
         return fetchAndUpdate(event.request);
@@ -167,21 +120,6 @@ function networkRequestFallBackToCache(event: FetchEvent) : Promise<Response | u
         return caches.match(event.request);
     }
     return Promise.reject("something else happened");
-
-    /*
-    return event.respondWith(() => {
-        try {
-            return fetchAndUpdate(event.request);
-        } catch (err) {
-            return caches.match(event.request).then((res: any) => {
-                if (res !== undefined) {
-                    return res;
-                }
-                return Promise.reject("nothing in the cache");
-            });
-        }
-        return Promise.reject("something else happened");
-    });*/
 }
 
 function fetchAndUpdate(request: Request) : Promise<Response> {
@@ -201,3 +139,14 @@ function fetchAndUpdate(request: Request) : Promise<Response> {
         })
 }
 
+const broadcast = new BroadcastChannel('service-worker-broadcast');
+
+broadcast.onmessage = (event) => {
+    switch(event.data.payloadType) {
+        case 'request-version':
+            broadcast.postMessage({
+                payload: version,
+                payloadType: 'version'
+            })
+    }
+}

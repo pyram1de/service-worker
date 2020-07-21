@@ -6,7 +6,7 @@
     "serve": "webpack-dev-server --mode=production",
     "start": "webpack --mode development --watch --env development",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --mode=development --watch",
+    "build": "webpack --mode=development",
     "deploy": "webpack --mode=production",
     "http-server": "http-server dist -c-1 -S --key ssl\\minisite.key --gzip --cert ssl\\minisite.crt --port 8080"
   },

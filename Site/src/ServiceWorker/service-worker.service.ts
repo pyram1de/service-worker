@@ -1,6 +1,6 @@
-import {BehaviorSubject, fromEventPattern, Observable, ReplaySubject} from "rxjs";
+import {BehaviorSubject, fromEventPattern, NEVER, Observable, ReplaySubject} from "rxjs";
 import registerWorker, {removeServiceWorkers} from "./registration";
-import {map, switchMap} from "rxjs/operators";
+import {filter, map, switchMap} from "rxjs/operators";
 import {environment} from "../environments/environment";
 
 export class ServiceWorkerService {
@@ -9,8 +9,13 @@ export class ServiceWorkerService {
         new ReplaySubject<ServiceWorkerRegistration>(1);
 
     private static registration: ServiceWorkerRegistration;
-    private updateAvailable: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
+    private updateAvailable: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    public version: string = '';
+
     public get updateAvailable$() :Observable<boolean> {
+        if(environment.features.serviceWorkerAutoUpdate) {
+            return NEVER;
+        }
         return this.updateAvailable.asObservable();
     }
 
@@ -52,25 +57,57 @@ export class ServiceWorkerService {
         }
         return fromEventPattern(addOnUpdateHandler, removeOnUpdateHandler);
     }
+
+    private onStateChangeHandler(serviceWorker: ServiceWorker) {
+        const addOnStateChangedHandler = (handler: EventListenerOrEventListenerObject) => {
+           serviceWorker.addEventListener('statechange', handler);
+        };
+        const removeOnStateChangedHandler = (handler: EventListenerOrEventListenerObject) => {
+          serviceWorker.removeEventListener('statechange', handler);
+        };
+        return fromEventPattern(addOnStateChangedHandler, removeOnStateChangedHandler);
+    }
+
     private nextWorker: any;
     private constructor() {
+        const broadcastChannel = new BroadcastChannel('service-worker-broadcast');
+
+        broadcastChannel.onmessage = (event) => {
+            switch(event.data.payloadType) {
+                case 'version':
+                    this.version = event.data.payload;
+                    break;
+            }
+        }
+
+        broadcastChannel.postMessage({
+            payloadType: 'request-version',
+        })
+
         this.nextWorker = null;
         ServiceWorkerService.registration$
             .pipe(switchMap(registration => {
-                registration.addEventListener('controllerchange', (x:any) => {
-                    console.log('HELP', x);
-                });
-                return this.onUpdateHandler(registration).pipe(map(res => {
-                    console.log('update found????', res);
-                    let newWorker = res.installing
-                    console.log('setting next worker to', registration.installing);
-
+                return this.onUpdateHandler(registration).pipe(switchMap(() => {
+                    console.log('updatefound', registration);
                     this.nextWorker = registration.installing;
-                    this.updateAvailable.next(true);
+                    console.log('state', this.nextWorker.state);
+                    return this.onStateChangeHandler(this.nextWorker).pipe(map((event) => {
+                        console.log('state changed...', event, this.nextWorker.state);
+                        if(this.nextWorker.state === 'installed') {
+                            this.updateAvailable.next(true);
+                        }
+                    }))
                 }))
             }))
             .subscribe(registration => {
-                console.log('I have subscribed....');
             });
+
+        this.updateAvailable.asObservable()
+                .pipe(filter(available => available === true))
+                .subscribe(() => {
+            if(environment.features.serviceWorkerAutoUpdate) {
+                this.update();
+            }
+        });
     }
 }
