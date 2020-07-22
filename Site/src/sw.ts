@@ -48,7 +48,7 @@ self.addEventListener('activate', (event:any) => {
 
 self.addEventListener('message', messageEvent => {
     if(messageEvent.data === 'skipWaiting') {
-        return self.skipWaiting()
+        return self.skipWaiting();
     }
 })
 
