@@ -18,9 +18,7 @@ export default function registerWorker() : Promise<any> {
     return Promise.reject("not supported in this browser");
 }
 
-
 export function removeServiceWorkers() : Promise<any> {
-    console.log('registration removeServiceWorkers');
     if('serviceWorker' in navigator) {
         return navigator.serviceWorker.getRegistrations().then((registrations) => {
             let promises = [];

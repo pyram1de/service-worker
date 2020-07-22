@@ -54,89 +54,34 @@ self.addEventListener('message', messageEvent => {
 
 self.addEventListener('fetch', (event: FetchEvent) => {
     const req = event.request;
-    return event.respondWith(
-        caches.match(event.request)
-            .then((res:any) => {
-                if (res)
-                    return res;
+    networkRequestFallBackToCache(event);
+});
 
-                if (!navigator.onLine) {
-                    if (event.request.url === environment.host + '/modules') {
-                        return new Response('["AC", "AI", "PASS"]', {
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                    }
-                    if (event.request.url === environment.host + '/record') {
-                        if (event.request.method === 'POST') {
-                            return new Response(
-                                JSON.stringify(
-                                    {
-                                        id: -1,
-                                        status: 'new',
-                                        check1: null,
-                                        check2: null,
-                                        check3: null
-                                    }
-                                ), {
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
-                        }
-                        if (event.request.method === 'PUT') {
-                            const body = event.request.body;
-                            if (body !== undefined) {
-
-                                return new Response(
-                                    JSON.stringify(SaveService.save(body)), {
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        }
-                                    });
-                            }
-                        }
-                    }
-                }
-                if (
-                    req.method === 'GET' &&
-                    req.mode === 'navigate' &&
-                    req.destination === 'document') {
-                    return caches.match('./').then((result) => {
-                        return result;
-                    });
-                }
-
-                // network first
-
-                return networkRequestFallBackToCache(event);
-            }));});
-
-function networkRequestFallBackToCache(event: FetchEvent) : Promise<Response | undefined> {
-    try {
-        return fetchAndUpdate(event.request);
-    } catch (err) {
-        return caches.match(event.request);
-    }
-    return Promise.reject("something else happened");
+function networkRequestFallBackToCache(event: FetchEvent) : void {
+    event.respondWith(
+        fetchAndUpdateCache(event)
+    );
 }
 
-function fetchAndUpdate(request: Request) : Promise<Response> {
-    return fetch(request)
-        .then(function (res: Response) {
-            if(res) {
-                return caches.open(version)
-                    .then(function (cache) {
-                        return cache.put(request, res.clone())
-                            .then(function () {
-                                return res
-                            })
+function fetchAndUpdateCache(event: FetchEvent) : Promise<Response> {
+    return fetch(event.request)
+        .then(
+            (res: Response) => {
+                return caches.open(version).then(
+                    (cache) => {
+                        if (!res.ok) {
+                            return cache.match(event.request).then(result => {
+                                if(!result) {
+                                    return Promise.reject("not found in cache");
+                                }
+                                return Promise.resolve(result);
+                            });
+                        } else {
+                            cache.put(event.request, res.clone());
+                            return res;
+                        }
                     })
-            } else {
-                return Promise.reject("no response received?")
-            }
-        })
+        });
 }
 
 const broadcast = new BroadcastChannel('service-worker-broadcast');

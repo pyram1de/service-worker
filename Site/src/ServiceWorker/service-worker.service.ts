@@ -88,19 +88,15 @@ export class ServiceWorkerService {
         ServiceWorkerService.registration$
             .pipe(switchMap(registration => {
                 return this.onUpdateHandler(registration).pipe(switchMap(() => {
-                    console.log('updatefound', registration);
                     this.nextWorker = registration.installing;
-                    console.log('state', this.nextWorker.state);
                     return this.onStateChangeHandler(this.nextWorker).pipe(map((event) => {
-                        console.log('state changed...', event, this.nextWorker.state);
                         if(this.nextWorker.state === 'installed') {
                             this.updateAvailable.next(true);
                         }
                     }))
                 }))
             }))
-            .subscribe(registration => {
-            });
+            .subscribe(() => {});
 
         this.updateAvailable.asObservable()
                 .pipe(filter(available => available === true))
